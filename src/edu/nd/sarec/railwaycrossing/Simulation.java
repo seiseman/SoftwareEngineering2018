@@ -17,68 +17,78 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 public class Simulation extends Application{
-	
+
 	private Pane root;
 	private Scene scene;
 	private MapBuilder mapBuilder;
 	private MapDisplay mapDisplay;
-	
-	@Override  
+
+	@Override
 	public void start(Stage stage) throws Exception {
-		
+
 		root = new Pane();
-		
+
 		// Build infrastructure
 		mapBuilder = new MapBuilder();
-		mapDisplay = new MapDisplay(root, mapBuilder.getRoads(), mapBuilder.getTracks(),mapBuilder.getAllGates());					
-		mapDisplay.drawTracks();		
+		mapDisplay = new MapDisplay(root, mapBuilder.getRoads(), mapBuilder.getTracks(),mapBuilder.getAllGates());
+		mapDisplay.drawTracks();
 		mapDisplay.drawRoad();
 		mapDisplay.drawGate();
-		
-		scene = new Scene(root,1200,1000);
+
+		scene = new Scene(root,1200,800);
 		stage.setTitle("Railways");
 		stage.setScene(scene);
 		stage.show();
-				
+
 		// Train
 		RailwayTracks track = mapBuilder.getTrack("Royal");
-		Train train = new Train(track.getEndX()+100,track.getEndY()-25);
+		RailwayTracks track2 = mapBuilder.getTrack("Royal2");
+		Train train = new Train(track.getEndX()+100,track.getEndY()-25, 2, "images\\Train.PNG");
+		Train train2 = new Train(track2.getStartX()-150,track2.getStartY()+25, -2, "images\\Train_r.png");
 		root.getChildren().add(train.getImageView());
-		
-		for(CrossingGate gate: mapBuilder.getAllGates())
+		root.getChildren().add(train2.getImageView());
+
+		for(CrossingGate gate: mapBuilder.getAllGates()) {
 			train.addObserver(gate);
-				
+			train2.addObserver(gate);
+		}
+
+
 		// Sets up a repetitive loop i.e., in handle that runs the actual simulation
 		new AnimationTimer(){
 
 			@Override
 			public void handle(long now) {
-			
+
 				createCar();
 				train.move();
-				
+				train2.move();
+
 				for(CrossingGate gate: mapBuilder.getAllGates())
 					gate.operateGate();
-				
+
 				if (train.offScreen())
 					train.reset();
-						
-				clearCars();				
+
+				if (train2.offScreen())
+					train2.reset();
+
+				clearCars();
 			}
 		}.start();
 	}
-	
+
 	// Clears cars as they leave the simulation
 	private void clearCars(){
 		Collection<Road> roads = mapBuilder.getRoads();
-		for(Road road: roads){			
+		for(Road road: roads){
 			if (road.getCarFactory()!= null){
-				ArrayList<Car> junkCars = road.getCarFactory().removeOffScreenCars();	
+				ArrayList<Car> junkCars = road.getCarFactory().removeOffScreenCars();
 				mapDisplay.removeCarImages(junkCars);
 			}
 		}
 	}
-	
+
 	private void createCar(){
 		Collection<Road> roads = mapBuilder.getRoads();
 		for(Road road: roads){
@@ -92,7 +102,7 @@ public class Simulation extends Application{
 			}
 		}
 	}
-	
+
 	public static void main(String[] args){
 		launch(args);
 	}
