@@ -2,14 +2,22 @@ package chipsChallenge;
 
 import java.awt.Point;
 
+import javafx.application.Platform;
+
 public class Chip {
 	private Point position = new Point();
 	GameGrid grid;
+	private boolean onEnd = false;
+	Teleporter tp;
+	boolean allCircuits = false;
+	boolean redKey = false;
+	boolean yellowKey = false;
 
-	Chip(GameGrid gameGrid) {
-		grid = gameGrid;
-		position.x = 12;
-		position.y = 12;
+	Chip() {
+		grid = GameGrid.getInstance();
+		tp = new Teleporter();
+		position.x = 15;
+		position.y = 21;
 	}
 
 	public Point getChipLocation() {
@@ -31,32 +39,49 @@ public class Chip {
 				position.x = targetX;
 				position.y = targetY;
 				//call next level function
+				if (grid.getLevel() != 2) {
+					onEnd = true;
+				}
+				else {
+					Platform.exit();
+				}
+				break;
 			case 2:
-				//hint block, pop up a display message
+				//circuit, remove the item
+				grid.circuits.get(0).pickup(targetX, targetY);
 				position.x = targetX;
 				position.y = targetY;
+				if (grid.circuits.isEmpty()) {
+					allCircuits = true;
+				}
 				break;
 			case 3:
-				//tile has a key on it. pick it up
+				//tile has a red key on it. pick it up
+				//Call some function that "picks up" the key and notifies doors to open
+				grid.rks.get(0).pickup(targetX, targetY);
 				position.x = targetX;
 				position.y = targetY;
-				//Call some function taht "picks up" the key and notifies doors to open
-				grid.setGridValue(targetX, targetY, 0);
+				if (grid.rks.isEmpty()) {
+					redKey = true;
+				}
 				break;
 			case 4:
-				//tile is a door, check for key
+				//tile is a yellow key
+				grid.yks.get(0).pickup(targetX, targetY);
+				position.x = targetX;
+				position.y = targetY;
+				if (grid.yks.isEmpty()) {
+					yellowKey = true;
+				}
 				break;
 			case 5:
 				//teleporter
-				//get the landing pads position and move chip to it.
-				if (position.x >13) {
-					position.x = 1;
-					position.y = 13;
-				}
-				else {
-					position.x = 23;
-					position.y = 13;
-				}
+				Point newCoord = tp.teleport(targetX, targetY);
+				position.x = newCoord.x;
+				position.y = newCoord.y;
+			case 6:
+				//some type of door
+				break;
 		}
 	}
 
@@ -98,5 +123,12 @@ public class Chip {
 		else {
 			position.y += 1;
 		}
+	}
+
+	public boolean getOnEnd() {
+		return onEnd;
+	}
+	public void setOnEnd(boolean set) {
+		onEnd = set;
 	}
 }
